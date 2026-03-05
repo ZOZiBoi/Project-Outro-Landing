@@ -107,30 +107,65 @@
       const canvas = document.getElementById("dotsCanvas");
       const ctx = canvas.getContext("2d");
 
-      function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        drawDots();
-      }
+      let dots = [];
+      const dotSize = 3;
+      const spacing = 40;
 
-      function drawDots() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#ffffff";
-
-        const dotSize = 3;
-        const spacing = 40;
-
+      function initDots() {
+        dots = [];
         for (let x = 0; x < canvas.width; x += spacing) {
           for (let y = 0; y < canvas.height; y += spacing) {
-            if (Math.random() > 0.7) {
-              ctx.fillRect(x, y, dotSize, dotSize);
-            }
+            dots.push({
+              x: x,
+              y: y,
+              // Random initial opacity and target
+              opacity: Math.random() > 0.7 ? Math.random() : 0,
+              targetOpacity: Math.random() > 0.7 ? Math.random() : 0,
+              speed: 0.005 + Math.random() * 0.015,
+            });
           }
         }
       }
 
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initDots();
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let dot of dots) {
+          // Move opacity smoothly towards target
+          if (dot.opacity < dot.targetOpacity) {
+            dot.opacity += dot.speed;
+            if (dot.opacity > dot.targetOpacity) dot.opacity = dot.targetOpacity;
+          } else if (dot.opacity > dot.targetOpacity) {
+            dot.opacity -= dot.speed;
+            if (dot.opacity < dot.targetOpacity) dot.opacity = dot.targetOpacity;
+          }
+
+          // Intermittently assign new random target opacities to simulate appearing and disappearing
+          if (dot.opacity === dot.targetOpacity && Math.random() < 0.005) {
+            // Pick a new target opacity (either visible or hidden)
+            dot.targetOpacity = Math.random() > 0.7 ? Math.random() * 0.8 + 0.2 : 0;
+            // Slightly vary speed per transition
+            dot.speed = 0.005 + Math.random() * 0.015;
+          }
+
+          if (dot.opacity > 0) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${dot.opacity})`;
+            ctx.fillRect(dot.x, dot.y, dotSize, dotSize);
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }
+
       window.addEventListener("resize", resize);
       resize();
+      animate();
     </script>
   </body>
 </html>
